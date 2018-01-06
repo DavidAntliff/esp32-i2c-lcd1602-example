@@ -35,8 +35,10 @@
 #include "driver/i2c.h"
 #include "esp_log.h"
 #include "sdkconfig.h"
+#include "rom/uart.h"
 
 #include "smbus.h"
+#include "i2c-lcd1602.h"
 
 #define TAG "app"
 
@@ -63,24 +65,75 @@ static void i2c_master_init(void)
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
+// WARNING: ESP32 does not support blocking input from stdin yet, so this polls
+// the UART and effectively hangs up the SDK.
+static uint8_t _getchar(void)
+{
+    uint8_t c = 0;
+    while (!c)
+    {
+       STATUS s = uart_rx_one_char(&c);
+       if (s == OK) {
+          printf("%c", c);
+       }
+    }
+    return c;
+}
+
 void lcd1602_task(void * pvParameter)
 {
     // Set up I2C
     i2c_master_init();
     i2c_port_t i2c_num = I2C_MASTER_NUM;
-    uint8_t address = CONFIG_TSL2561_I2C_ADDRESS;
+    uint8_t address = CONFIG_LCD1602_I2C_ADDRESS;
 
     // Set up the SMBus
     smbus_info_t * smbus_info = smbus_malloc();
     smbus_init(smbus_info, i2c_num, address);
     smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
 
-    // Set up the LCD1602 device
-    // ...
+    // Set up the LCD1602 device with backlight off
+    i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
+    i2c_lcd1602_init(lcd_info, smbus_info, true);
+
+    // turn off backlight
+    ESP_LOGI(TAG, "backlight off");
+    i2c_lcd1602_set_backlight(lcd_info, false);
+    //vTaskDelay(1000 / portTICK_RATE_MS);
+    _getchar();
+
+    // turn on backlight
+    ESP_LOGI(TAG, "backlight on");
+    i2c_lcd1602_set_backlight(lcd_info, true);
+    //vTaskDelay(1000 / portTICK_RATE_MS);
+    _getchar();
+
+    ESP_LOGI(TAG, "cursor on");
+    i2c_lcd1602_set_cursor(lcd_info, true);
+    _getchar();
+
+    ESP_LOGI(TAG, "display A at 0,0");
+    i2c_lcd1602_move_cursor(lcd_info, 0, 0);
+    i2c_lcd1602_write_char(lcd_info, 'A');
+    _getchar();
+
+    ESP_LOGI(TAG, "display B at 8,0");
+    i2c_lcd1602_move_cursor(lcd_info, 8, 0);
+    i2c_lcd1602_write_char(lcd_info, 'B');
+    _getchar();
+
+    ESP_LOGI(TAG, "display C at 15,1");
+    i2c_lcd1602_move_cursor(lcd_info, 15, 1);
+    i2c_lcd1602_write_char(lcd_info, 'C');
+    _getchar();
+
+    i2c_lcd1602_home(lcd_info);
 
     while (1)
     {
+        i2c_lcd1602_write_char(lcd_info, 'D');
         vTaskDelay(1000 / portTICK_RATE_MS);
+        ESP_LOGI(TAG, "loop...");
     }
 
     vTaskDelete(NULL);

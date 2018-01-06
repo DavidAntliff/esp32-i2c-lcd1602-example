@@ -1,4 +1,4 @@
-menu "esp32-tsl2561-example Configuration"
+menu "esp32-i2c-lcd1602-example Configuration"
 
 config I2C_MASTER_SCL
     int "I2C Master SCL GPIO number"
