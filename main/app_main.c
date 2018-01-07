@@ -130,9 +130,21 @@ void lcd1602_task(void * pvParameter)
     i2c_lcd1602_move_cursor(lcd_info, 0, 1);
     i2c_lcd1602_set_blink(lcd_info, true);
 
+    ESP_LOGI(TAG, "display DE and move cursor back onto D")
+    _getchar();
+    i2c_lcd1602_write_char(lcd_info, 'D');
+    i2c_lcd1602_set_right_to_left(lcd_info);
+    i2c_lcd1602_write_char(lcd_info, 'E');
+    i2c_lcd1602_set_left_to_right(lcd_info);
+
     ESP_LOGI(TAG, "disable display");
     _getchar();
     i2c_lcd1602_set_display(lcd_info, false);
+
+    ESP_LOGI(TAG, "display F at 7,1");
+    _getchar();
+    i2c_lcd1602_move_cursor(lcd_info, 7, 1);
+    i2c_lcd1602_write_char(lcd_info, 'F');
 
     ESP_LOGI(TAG, "enable display");
     _getchar();
@@ -221,9 +233,10 @@ void lcd1602_task(void * pvParameter)
         vTaskDelay(200 / portTICK_RATE_MS);
     }
 
-    ESP_LOGI(TAG, "clear display");
+    ESP_LOGI(TAG, "clear display and disable cursor");
     _getchar();
     i2c_lcd1602_clear(lcd_info);
+    i2c_lcd1602_set_cursor(lcd_info, false);
 
     ESP_LOGI(TAG, "create custom character and display");
     _getchar();
@@ -236,24 +249,28 @@ void lcd1602_task(void * pvParameter)
     uint8_t check[8] = {0x0, 0x1 ,0x3, 0x16, 0x1c, 0x8, 0x0};
     uint8_t cross[8] = {0x0, 0x1b, 0xe, 0x4, 0xe, 0x1b, 0x0};
     uint8_t retarrow[8] = { 0x1, 0x1, 0x5, 0x9, 0x1f, 0x8, 0x4};
-    i2c_lcd1602_create_char(lcd_info, 0, bell);
-    i2c_lcd1602_create_char(lcd_info, 1, note);
-    i2c_lcd1602_create_char(lcd_info, 2, clock);
-    i2c_lcd1602_create_char(lcd_info, 3, heart);
-    i2c_lcd1602_create_char(lcd_info, 4, duck);
-    i2c_lcd1602_create_char(lcd_info, 5, check);
-    i2c_lcd1602_create_char(lcd_info, 6, cross);
-    i2c_lcd1602_create_char(lcd_info, 7, retarrow);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_0, bell);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_1, note);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_2, clock);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_3, heart);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_4, duck);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_5, check);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_6, cross);
+    i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_7, retarrow);
 
     // after defining custom characters, DDRAM address must be set by home() or moving the cursor
 
-    ESP_LOGI(TAG, "display custom characters (twice)");
+    ESP_LOGI(TAG, "display custom characters");
     _getchar();
     i2c_lcd1602_move_cursor(lcd_info, 0, 0);
-    for (int i = 0; i < 16; ++i)
-    {
-        i2c_lcd1602_write_char(lcd_info, i);
-    }
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_1);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_2);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_3);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_4);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_5);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_6);
+    i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_7);
 
     ESP_LOGI(TAG, "display special characters");
     _getchar();
@@ -276,13 +293,14 @@ void lcd1602_task(void * pvParameter)
     ESP_LOGI(TAG, "display all characters");
     _getchar();
     i2c_lcd1602_clear(lcd_info);
+    i2c_lcd1602_set_cursor(lcd_info, true);
     uint8_t c = 0;
     uint8_t col = 0;
     uint8_t row = 0;
     while (1)
     {
         i2c_lcd1602_write_char(lcd_info, c);
-        vTaskDelay(120 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_RATE_MS);
         ESP_LOGI(TAG, "col %d, row %d, char 0x%02x", col, row, c);
         ++c;
         ++col;
