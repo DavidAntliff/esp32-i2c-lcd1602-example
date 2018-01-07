@@ -33,9 +33,23 @@ To run this example, connect one LCD1602 device to two GPIOs on the ESP32 (I2C S
 
 ## Features
 
-This example provides:
+This example steps through the features of the esp32-i2c-lcd1602 component. It demonstrates:
 
- * ...
+ * Display initialisation, disabling and enabling, clearing.
+ * Backlight control.
+ * Underline and blinking cursor control, including arbitrary cursor movement and homing.
+ * Display scrolling.
+ * Custom character definition.
+ * Display of all characters.
+
+Each step waits for a keypress on stdin before executing. If stdin is not available (no USB/UART available), modify the following code:
+
+```
+//#define USE_STDIN  1
+#undef USE_STDIN
+```
+
+Each step will then wait for one second before proceeding automatically.
 
 ## Source Code
 
@@ -52,6 +66,6 @@ The code in this project is licensed under the MIT license - see LICENSE for det
 
 ## Acknowledgements
 
-"I2C" is a registered trademark of Phillips Corporation.
-
-"SMBus" is a trademark of Intel Corporation. 
+ * "I2C" is a registered trademark of Phillips Corporation.
+ * "SMBus" is a trademark of Intel Corporation.
+ 
