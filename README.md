@@ -1,10 +1,13 @@
 # esp32-i2c-lcd1602-example
 
+[![Build Status](https://travis-ci.org/DavidAntliff/esp32-i2c-lcd1602-example.svg?branch=master)](https://travis-ci.org/DavidAntliff/esp32-i2c-lcd1602-example)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+
 ## Introduction
 
 This is an example application for the HD4470-compatible LCD1602 device connected via an I2C backpack.
 
-It is written and tested for the [ESP-IDF](https://github.com/espressif/esp-idf) environment, using the xtensa-esp32-elf toolchain (gcc version 5.2.0).
+It is written and tested for v2.1.1 and v3.0 of the [ESP-IDF](https://github.com/espressif/esp-idf) environment, using the xtensa-esp32-elf toolchain (gcc version 5.2.0).
 
 Ensure that submodules are cloned:
 
