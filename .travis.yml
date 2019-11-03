@@ -1,7 +1,7 @@
-sudo: false
-language: bash
-os:
-  - linux
+dist: bionic
+env:
+  global:
+    PATH=/opt/python/3.7.1/bin:$PATH
 
 addons:
   apt:
@@ -36,6 +36,8 @@ install:
   - pip install --user --requirement $IDF_PATH/requirements.txt
 
 script:
+  - which python
+  - python --version
   # Go back to the git repository
   - cd $PROJECT_PATH
   # Update configuration so that kconfig doesn't start interactive mode
