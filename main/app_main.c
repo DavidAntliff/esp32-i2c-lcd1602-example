@@ -138,7 +138,7 @@ void lcd1602_task(void * pvParameter)
     i2c_lcd1602_move_cursor(lcd_info, 0, 1);
     i2c_lcd1602_set_blink(lcd_info, true);
 
-    ESP_LOGI(TAG, "display DE and move cursor back onto D")
+    ESP_LOGI(TAG, "display DE and move cursor back onto D");
     _wait_for_user();
     i2c_lcd1602_write_char(lcd_info, 'D');
     i2c_lcd1602_set_right_to_left(lcd_info);
@@ -166,7 +166,7 @@ void lcd1602_task(void * pvParameter)
     _wait_for_user();
     i2c_lcd1602_set_cursor(lcd_info, false);
 
-    ESP_LOGI(TAG, "display alphabet at 0,0")  // should overflow to second line at "ABC..."
+    ESP_LOGI(TAG, "display alphabet at 0,0");  // should overflow to second line at "ABC..."
     _wait_for_user();
     i2c_lcd1602_home(lcd_info);
     i2c_lcd1602_write_string(lcd_info, "abcdefghijklmnopqrstuvwxyz0123456789.,-+ABCDEFGHIJKLMNOPQRSTUVWXYZ");
