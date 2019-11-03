@@ -8,7 +8,7 @@ addons:
     packages:
       - gperf
       - python
-      - python-serial
+      - python-pip
 
 before_install:
   # Save path to the git respository
@@ -32,6 +32,8 @@ install:
   - git clone --recursive --branch v3.3 https://github.com/espressif/esp-idf.git
   # Set the path to ESP-IDF directory
   - export IDF_PATH=~/esp/esp-idf
+  # Install python dependencies
+  - pip install --requirement $IDF_PATH/requirements.txt
 
 script:
   # Go back to the git repository
