@@ -2,7 +2,9 @@ dist: bionic
 env:
   global:
     # Set Python 3.7.1 as the default python
-    PATH=/opt/python/3.7.1/bin:$PATH
+    - PATH=/opt/python/3.7.1/bin:$PATH
+    - MAKEFLAGS="-j 2"
+
 language: bash
 
 addons:
