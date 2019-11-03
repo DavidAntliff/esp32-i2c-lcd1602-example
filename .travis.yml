@@ -33,7 +33,7 @@ install:
   # Set the path to ESP-IDF directory
   - export IDF_PATH=~/esp/esp-idf
   # Install python dependencies
-  - pip install --requirement $IDF_PATH/requirements.txt
+  - pip install --user --requirement $IDF_PATH/requirements.txt
 
 script:
   # Go back to the git repository
