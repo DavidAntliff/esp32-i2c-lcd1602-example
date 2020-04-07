@@ -42,6 +42,16 @@
 
 #define TAG "app"
 
+// LCD1602
+#define LCD_NUM_ROWS               2
+#define LCD_NUM_COLUMNS            32
+#define LCD_NUM_VISIBLE_COLUMNS    16
+
+// LCD2004
+//#define LCD_NUM_ROWS               4
+//#define LCD_NUM_COLUMNS            40
+//#define LCD_NUM_VISIBLE_COLUMNS    20
+
 // Undefine USE_STDIN if no stdin is available (e.g. no USB UART) - a fixed delay will occur instead of a wait for a keypress.
 #define USE_STDIN  1
 //#undef USE_STDIN
@@ -69,11 +79,12 @@ static void i2c_master_init(void)
                        I2C_MASTER_TX_BUF_LEN, 0);
 }
 
-// WARNING: ESP32 does not support blocking input from stdin yet, so this polls
-// the UART and effectively hangs up the SDK.
+// uart_rx_one_char_block() causes a watchdog trigger, so use the non-blocking
+// uart_rx_one_char() and delay briefly to reset the watchdog.
 static uint8_t _wait_for_user(void)
 {
     uint8_t c = 0;
+
 #ifdef USE_STDIN
     while (!c)
     {
@@ -81,6 +92,7 @@ static uint8_t _wait_for_user(void)
        if (s == OK) {
           printf("%c", c);
        }
+       vTaskDelay(1);
     }
 #else
     vTaskDelay(1000 / portTICK_RATE_MS);
@@ -97,12 +109,15 @@ void lcd1602_task(void * pvParameter)
 
     // Set up the SMBus
     smbus_info_t * smbus_info = smbus_malloc();
-    smbus_init(smbus_info, i2c_num, address);
-    smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS);
+    ESP_ERROR_CHECK(smbus_init(smbus_info, i2c_num, address));
+    ESP_ERROR_CHECK(smbus_set_timeout(smbus_info, 1000 / portTICK_RATE_MS));
 
     // Set up the LCD1602 device with backlight off
     i2c_lcd1602_info_t * lcd_info = i2c_lcd1602_malloc();
-    i2c_lcd1602_init(lcd_info, smbus_info, true);
+    ESP_ERROR_CHECK(i2c_lcd1602_init(lcd_info, smbus_info, true,
+                                     LCD_NUM_ROWS, LCD_NUM_COLUMNS, LCD_NUM_VISIBLE_COLUMNS));
+
+    ESP_ERROR_CHECK(i2c_lcd1602_reset(lcd_info));
 
     // turn off backlight
     ESP_LOGI(TAG, "backlight off");
@@ -149,7 +164,7 @@ void lcd1602_task(void * pvParameter)
     _wait_for_user();
     i2c_lcd1602_set_display(lcd_info, false);
 
-    ESP_LOGI(TAG, "display F at 7,1");
+    ESP_LOGI(TAG, "display F at 7,1 (display disabled)");
     _wait_for_user();
     i2c_lcd1602_move_cursor(lcd_info, 7, 1);
     i2c_lcd1602_write_char(lcd_info, 'F');
@@ -166,12 +181,12 @@ void lcd1602_task(void * pvParameter)
     _wait_for_user();
     i2c_lcd1602_set_cursor(lcd_info, false);
 
-    ESP_LOGI(TAG, "display alphabet at 0,0");  // should overflow to second line at "ABC..."
+    ESP_LOGI(TAG, "display alphabet from 0,0");  // should overflow to second line at "ABC..."
     _wait_for_user();
     i2c_lcd1602_home(lcd_info);
     i2c_lcd1602_write_string(lcd_info, "abcdefghijklmnopqrstuvwxyz0123456789.,-+ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 
-    ESP_LOGI(TAG, "scroll left 8 places slowly");
+    ESP_LOGI(TAG, "scroll display left 8 places slowly");
     _wait_for_user();
     for (int i = 0; i < 8; ++i)
     {
@@ -179,7 +194,7 @@ void lcd1602_task(void * pvParameter)
         vTaskDelay(200 / portTICK_RATE_MS);
     }
 
-    ESP_LOGI(TAG, "scroll right 8 places quickly");
+    ESP_LOGI(TAG, "scroll display right 8 places quickly");
     _wait_for_user();
     for (int i = 0; i < 8; ++i)
     {
@@ -246,7 +261,7 @@ void lcd1602_task(void * pvParameter)
     i2c_lcd1602_clear(lcd_info);
     i2c_lcd1602_set_cursor(lcd_info, false);
 
-    ESP_LOGI(TAG, "create custom character and display");
+    ESP_LOGI(TAG, "create and display custom characters");
     _wait_for_user();
     // https://github.com/agnunez/ESP8266-I2C-LCD1602/blob/master/examples/CustomChars/CustomChars.ino
     uint8_t bell[8]  = {0x4, 0xe, 0xe, 0xe, 0x1f, 0x0, 0x4};
@@ -267,9 +282,6 @@ void lcd1602_task(void * pvParameter)
     i2c_lcd1602_define_char(lcd_info, I2C_LCD1602_INDEX_CUSTOM_7, retarrow);
 
     // after defining custom characters, DDRAM address must be set by home() or moving the cursor
-
-    ESP_LOGI(TAG, "display custom characters");
-    _wait_for_user();
     i2c_lcd1602_move_cursor(lcd_info, 0, 0);
     i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_0);
     i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_CUSTOM_1);
@@ -298,7 +310,7 @@ void lcd1602_task(void * pvParameter)
     i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_DIVIDE);
     i2c_lcd1602_write_char(lcd_info, I2C_LCD1602_CHARACTER_BLOCK);
 
-    ESP_LOGI(TAG, "display all characters");
+    ESP_LOGI(TAG, "display all characters (loop)");
     _wait_for_user();
     i2c_lcd1602_clear(lcd_info);
     i2c_lcd1602_set_cursor(lcd_info, true);
@@ -309,13 +321,13 @@ void lcd1602_task(void * pvParameter)
     {
         i2c_lcd1602_write_char(lcd_info, c);
         vTaskDelay(100 / portTICK_RATE_MS);
-        ESP_LOGI(TAG, "col %d, row %d, char 0x%02x", col, row, c);
+        ESP_LOGD(TAG, "col %d, row %d, char 0x%02x", col, row, c);
         ++c;
         ++col;
-        if (col >= I2C_LCD1602_NUM_VISIBLE_COLUMNS)
+        if (col >= LCD_NUM_VISIBLE_COLUMNS)
         {
             ++row;
-            if (row >= I2C_LCD1602_NUM_ROWS)
+            if (row >= LCD_NUM_ROWS)
             {
                 row = 0;
             }
@@ -331,4 +343,3 @@ void app_main()
 {
     xTaskCreate(&lcd1602_task, "lcd1602_task", 4096, NULL, 5, NULL);
 }
-

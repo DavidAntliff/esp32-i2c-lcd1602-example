@@ -7,7 +7,9 @@
 
 This is an example application for the HD4470-compatible LCD1602 device connected via an I2C backpack.
 
-It is written and tested for v2.1.1 and v3.0 of the [ESP-IDF](https://github.com/espressif/esp-idf) environment, using the xtensa-esp32-elf toolchain (gcc version 5.2.0).
+This application is also usable with an LCD2004 module (20 columns, 4 rows), by uncommenting the `LCD_NUM_ROWS`, `LCD_NUM_COLUMNS`, and `LCD_NUM_VISIBLE_COLUMNS` definitions at the top of `app_main.c`.
+
+It is written and tested for v3.3 of the [ESP-IDF](https://github.com/espressif/esp-idf) environment, using the xtensa-esp32-elf toolchain (gcc version 5.2.0).
 
 Ensure that submodules are cloned:
 
@@ -16,8 +18,9 @@ Ensure that submodules are cloned:
 Build the application with:
 
     $ cd esp32-i2c-lcd1602-example.git
-    $ make menuconfig    # set your serial configuration and the I2C GPIO - see below
-    $ make flash monitor
+    $ idf.py menuconfig    # set your serial configuration and the I2C GPIO - see below
+    $ idf.py build
+    $ idf.py -p (PORT) flash monitor
 
 The program should detect your connected device and display some demonstration text on the LCD.
 
@@ -32,7 +35,9 @@ This application makes use of the following components (included as submodules):
 
 To run this example, connect one LCD1602 device to two GPIOs on the ESP32 (I2C SDA and SCL). If external pull-up resistors are not provided with the sensor, add a 10 KOhm resistor from each GPIO to the 3.3V supply.
 
-`make menuconfig` can be used to set the I2C GPIOs and LCD1602 device I2C address.
+`idf.py menuconfig` can be used to set the I2C GPIOs and LCD1602 device I2C address.
+
+Note that the 3.3V supply may be insufficient to run the display satisfactorily. In this case I suggest using a 5V supply to the LCD display, and using appropriate level shifter circuitry on the I2C SCL and SDA connections.
 
 ## Features
 
