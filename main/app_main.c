@@ -37,8 +37,8 @@
 #include "sdkconfig.h"
 #include "rom/uart.h"
 
-#include "smbus.h"
-#include "i2c-lcd1602.h"
+#include "components/esp32-smbus/smbus.h"
+#include "components/esp32-i2c-lcd1602/i2c-lcd1602.h"
 
 #define TAG "app"
 
